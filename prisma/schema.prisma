@@ -1,0 +1,126 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model clips {
+  id                 Int       @id @default(autoincrement())
+  project_id         Int
+  start_time         Float
+  end_time           Float
+  duration           Float?
+  title              String?   @db.VarChar(255)
+  description        String?
+  order              Int?
+  ai_generated       Boolean?
+  ai_score           Float?
+  ai_reasoning       String?
+  ai_tags            Json?     @db.Json
+  transcript_excerpt String?
+  output_filename    String?   @db.VarChar(500)
+  output_path        String?   @db.VarChar(1000)
+  output_size        Int?
+  status             String?   @db.VarChar(50)
+  error_message      String?
+  created_at         DateTime? @db.Timestamp(6)
+  processed_at       DateTime? @db.Timestamp(6)
+  projects           projects  @relation(fields: [project_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model crop_sessions {
+  id                 Int       @id @default(autoincrement())
+  project_id         Int
+  output_ratio       String?   @db.VarChar(10)
+  smoothing_level    Float?
+  frame_rate         Float?
+  trajectory_data    Json?     @db.Json
+  speaker_timeline   Json?     @db.Json
+  detection_metadata Json?     @db.Json
+  video_width        Int?
+  video_height       Int?
+  video_duration     Float?
+  status             String?   @db.VarChar(50)
+  progress           Float?
+  current_phase      String?   @db.VarChar(50)
+  error_message      String?
+  output_filename    String?   @db.VarChar(500)
+  output_path        String?   @db.VarChar(1000)
+  output_s3_key      String?   @db.VarChar(1000)
+  output_width       Int?
+  output_height      Int?
+  created_at         DateTime? @db.Timestamp(6)
+  analyzed_at        DateTime? @db.Timestamp(6)
+  completed_at       DateTime? @db.Timestamp(6)
+  projects           projects  @relation(fields: [project_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model output_files {
+  id              Int       @id @default(autoincrement())
+  project_id      Int
+  filename        String    @db.VarChar(500)
+  filepath        String    @db.VarChar(1000)
+  file_type       String?   @db.VarChar(50)
+  duration        Float?
+  resolution      String?   @db.VarChar(50)
+  file_size       Int?
+  download_count  Int?
+  last_downloaded DateTime? @db.Timestamp(6)
+  expires_at      DateTime? @db.Timestamp(6)
+  is_deleted      Boolean?
+  created_at      DateTime? @db.Timestamp(6)
+  s3_key          String?   @db.VarChar(1000)
+  projects        projects  @relation(fields: [project_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model projects {
+  id                 Int              @id @default(autoincrement())
+  name               String           @db.VarChar(255)
+  description        String?
+  source_filename    String           @db.VarChar(500)
+  source_path        String?          @db.VarChar(1000)
+  source_duration    Float?
+  source_resolution  String?          @db.VarChar(50)
+  source_size        Int?
+  project_type       String?          @db.VarChar(50)
+  ai_num_clips       Int?
+  ai_target_duration Int?
+  ai_prompt          String?
+  status             String?          @db.VarChar(50)
+  error_message      String?
+  progress           Float?
+  created_at         DateTime?        @db.Timestamp(6)
+  updated_at         DateTime?        @db.Timestamp(6)
+  completed_at       DateTime?        @db.Timestamp(6)
+  source_s3_key      String?          @db.VarChar(1000)
+  thumbnail_path     String?          @db.VarChar(1000)
+  thumbnail_s3_key   String?          @db.VarChar(1000)
+  is_deleted         Boolean?         @default(false)
+  deleted_at         DateTime?        @db.Timestamp(6)
+  clips              clips[]
+  crop_sessions      crop_sessions[]
+  output_files       output_files[]
+  transcriptions     transcriptions[]
+}
+
+model transcriptions {
+  id                 Int       @id @default(autoincrement())
+  project_id         Int
+  full_text          String?
+  language           String?   @db.VarChar(20)
+  confidence         Float?
+  words              Json?     @db.Json
+  duration_processed Float?
+  processing_time    Float?
+  created_at         DateTime? @db.Timestamp(6)
+  projects           projects  @relation(fields: [project_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model waitlist_leads {
+  id         Int      @id @default(autoincrement())
+  email      String   @unique @db.VarChar(255)
+  created_at DateTime @default(now()) @db.Timestamp(6)
+}
